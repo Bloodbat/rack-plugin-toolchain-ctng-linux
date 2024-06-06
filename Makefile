@@ -16,14 +16,18 @@ export JOBS :=
 export JOBS_CT_NG :=
 endif
 
+WGET := wget --continue
+UNTAR := tar -x -f
+UNZIP := unzip
+
+
 # Toolchain build
 
 
 crosstool-ng := $(LOCAL_DIR)/bin/ct-ng
 $(crosstool-ng):
 	git clone https://github.com/crosstool-ng/crosstool-ng.git
-	# Use development version to avoid zlib issue until proper release is available
-	cd crosstool-ng && git checkout 82346dd7dfe7ed20dc8ec71e193c2d3b1930e22d
+	cd crosstool-ng && git checkout e63c40854c977f488bee159a8f8ebf5fc06c8666
 	cd crosstool-ng && ./bootstrap
 	cd crosstool-ng && ./configure --prefix="$(LOCAL_DIR)"
 	cd crosstool-ng && make -j $(JOBS)
@@ -37,7 +41,7 @@ $(toolchain-lin): $(crosstool-ng)
 	ct-ng x86_64-ubuntu16.04-linux-gnu
 	CT_PREFIX="$(LOCAL_DIR)" ct-ng build$(JOBS_CT_NG)
 	rm -rf .build .config build.log
-	# HACK Copy GL include dir to toolchain sysroot
+	# HACK Copy GL and related include dirs to toolchain sysroot
 	chmod +w $(toolchain-lin)/x86_64-ubuntu16.04-linux-gnu/sysroot/usr/include
 	cp -r /usr/include/GL $(toolchain-lin)/x86_64-ubuntu16.04-linux-gnu/sysroot/usr/include/
 	cp -r /usr/include/KHR $(toolchain-lin)/x86_64-ubuntu16.04-linux-gnu/sysroot/usr/include/
