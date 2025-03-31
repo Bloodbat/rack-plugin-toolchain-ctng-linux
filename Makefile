@@ -20,24 +20,31 @@ WGET := wget --continue
 UNTAR := tar -x -f
 UNZIP := unzip
 
-
 # Toolchain build
-
 
 crosstool-ng := $(LOCAL_DIR)/bin/ct-ng
 $(crosstool-ng):
 	git clone https://github.com/crosstool-ng/crosstool-ng.git
-	cd crosstool-ng && git checkout e63c40854c977f488bee159a8f8ebf5fc06c8666
+	cd crosstool-ng && git checkout 32f288e61fee8528931bcd55bf106cf0cfb4e2a1
 	cd crosstool-ng && ./bootstrap
 	cd crosstool-ng && ./configure --prefix="$(LOCAL_DIR)"
 	cd crosstool-ng && make -j $(JOBS)
 	cd crosstool-ng && make install -j $(JOBS)
 	rm -rf crosstool-ng
 
-
 toolchain-lin := $(LOCAL_DIR)/x86_64-ubuntu16.04-linux-gnu
 toolchain-lin: $(toolchain-lin)
 $(toolchain-lin): $(crosstool-ng)
+	# Build a newer version of texinfo because lastest released version 7.1 has a bug
+	# that prevents building glibc for the GNU/Linux based toolchain.
+	git clone https://git.savannah.gnu.org/git/texinfo.git
+	cd texinfo && git checkout 60d3edc4b74b4e1e5ef55e53de394d3b65506c47
+	cd texinfo && ./autogen.sh
+	cd texinfo && ./configure --prefix="$(LOCAL_DIR)"
+	cd texinfo && make -j $(JOBS)
+	cd texinfo && make install -j $(JOBS)
+	rm -rf texinfo
+
 	ct-ng x86_64-ubuntu16.04-linux-gnu
 	CT_PREFIX="$(LOCAL_DIR)" ct-ng build$(JOBS_CT_NG)
 	rm -rf .build .config build.log
@@ -50,10 +57,8 @@ $(toolchain-lin): $(crosstool-ng)
 
 # Docker helpers
 
-
 dep-ubuntu:
-	apt-get update
-	apt-get install -y --no-install-recommends \
+	sudo apt-get install --no-install-recommends \
 		ca-certificates \
 		git \
 		build-essential \
@@ -88,7 +93,7 @@ dep-ubuntu:
 		coreutils \
 		zstd \
 		markdown \
-		libarchive-tools
-
+		libarchive-tools \
+		gettext
 
 .NOTPARALLEL:
