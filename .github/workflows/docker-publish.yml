@@ -1,4 +1,4 @@
-name: Build Linux Toolchain Crosscompiler Image
+name: Build Linux Toolchain Crosscompiler Image for VCV Rack
 
 # on:
 #   push:
