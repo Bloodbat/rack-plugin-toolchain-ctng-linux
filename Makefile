@@ -16,34 +16,38 @@ export JOBS :=
 export JOBS_CT_NG :=
 endif
 
-WGET := wget --continue
+WGET := wget -c
 UNTAR := tar -x -f
 UNZIP := unzip
+
+SHA256 := sha256check() { echo "$$2  $$1" | sha256sum -c; }; sha256check
+
+CROSSTOOL_NG_VERSION := 1.27.0
 
 # Toolchain build
 
 crosstool-ng := $(LOCAL_DIR)/bin/ct-ng
 $(crosstool-ng):
-	git clone https://github.com/crosstool-ng/crosstool-ng.git
-	cd crosstool-ng && git checkout 32f288e61fee8528931bcd55bf106cf0cfb4e2a1
-	cd crosstool-ng && ./bootstrap
-	cd crosstool-ng && ./configure --prefix="$(LOCAL_DIR)"
-	cd crosstool-ng && make -j $(JOBS)
-	cd crosstool-ng && make install -j $(JOBS)
-	rm -rf crosstool-ng
+	$(WGET) "http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-$(CROSSTOOL_NG_VERSION).tar.bz2"
+	$(SHA256) crosstool-ng-$(CROSSTOOL_NG_VERSION).tar.bz2 6307b93a0abdd1b20b85305210094195825ff00a2ed8b650eeab21235088da4b
+	$(UNTAR) crosstool-ng-$(CROSSTOOL_NG_VERSION).tar.bz2
+	rm crosstool-ng-$(CROSSTOOL_NG_VERSION).tar.bz2
+	cd crosstool-ng-$(CROSSTOOL_NG_VERSION) && ./configure --prefix="$(LOCAL_DIR)"
+	cd crosstool-ng-$(CROSSTOOL_NG_VERSION) && make -j $(JOBS)
+	cd crosstool-ng-$(CROSSTOOL_NG_VERSION) && make install
+	rm -rf crosstool-ng-$(CROSSTOOL_NG_VERSION)
 
 toolchain-lin := $(LOCAL_DIR)/x86_64-ubuntu16.04-linux-gnu
 toolchain-lin: $(toolchain-lin)
 $(toolchain-lin): $(crosstool-ng)
-	# Build a newer version of texinfo because lastest released version 7.1 has a bug
-	# that prevents building glibc for the GNU/Linux based toolchain.
-	git clone https://git.savannah.gnu.org/git/texinfo.git
-	cd texinfo && git checkout 60d3edc4b74b4e1e5ef55e53de394d3b65506c47
-	cd texinfo && ./autogen.sh
-	cd texinfo && ./configure --prefix="$(LOCAL_DIR)"
-	cd texinfo && make -j $(JOBS)
-	cd texinfo && make install -j $(JOBS)
-	rm -rf texinfo
+	$(WGET) "https://ftp.gnu.org/gnu/texinfo/texinfo-7.2.tar.gz"
+	$(SHA256) texinfo-7.2.tar.gz e86de7dfef6b352aa1bf647de3a6213d1567c70129eccbf8977706d9c91919c8
+	$(UNTAR) texinfo-7.2.tar.gz
+	rm texinfo-7.2.tar.gz
+	cd texinfo-7.2 && ./configure --prefix="$(LOCAL_DIR)"
+	cd texinfo-7.2 && make -j $(JOBS)
+	cd texinfo-7.2 && make install -j $(JOBS)
+	rm -rf texinfo-7.2
 
 	ct-ng x86_64-ubuntu16.04-linux-gnu
 	CT_PREFIX="$(LOCAL_DIR)" ct-ng build$(JOBS_CT_NG)
