@@ -27,7 +27,7 @@ SHA256 := sha256check() { echo "$$2  $$1" | sha256sum -c; }; sha256check
 crosstool-ng := $(LOCAL_DIR)/bin/ct-ng
 $(crosstool-ng):
 	git clone "https://github.com/crosstool-ng/crosstool-ng.git" crosstool-ng
-	cd crosstool-ng && git checkout b49e4c689c4dc8e9c8da5b8f56d7ddf59e485d3b
+	cd crosstool-ng && git checkout 899e015abf8c70088e8b67e87586ae81f305711c
 	cd crosstool-ng && ./bootstrap
 	cd crosstool-ng && ./configure --prefix="$(LOCAL_DIR)"
 	cd crosstool-ng && make -j $(JOBS)
